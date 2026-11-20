@@ -1,0 +1,5 @@
+<?php
+require_once __DIR__ . '/../config.php';
+admin_required();
+function admin_header(string $title): void { ?><!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=e($title)?> — Store Admin</title><link rel="stylesheet" href="../assets/css/style.css"></head><body class="admin-body"><header class="admin-topbar"><a class="wordmark" href="index.php"><?=e(setting('store_name','KELOMPOK 6'))?> / ADMIN</a><nav><a href="index.php">Dashboard</a><a href="products.php">Products</a><a href="orders.php">Orders</a><a href="settings.php">Settings</a><form method="post" action="logout.php"><input type="hidden" name="csrf_token" value="<?=e(csrf_token())?>"><button class="text-button" type="submit">Log out</button></form></nav></header><main class="admin-main"><h1><?=e($title)?></h1><?php if($message=flash('success')): ?><p class="notice success"><?=e($message)?></p><?php endif; ?><?php if($message=flash('error')): ?><p class="notice error"><?=e($message)?></p><?php endif; ?><?php }
+function admin_footer(): void { ?></main><script src="../assets/js/app.js" defer></script></body></html><?php }
