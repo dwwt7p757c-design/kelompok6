@@ -1,0 +1,12 @@
+<?php
+require_once __DIR__ . '/includes.php';
+$allowedStatuses = ['Awaiting Payment','Paid','Processing','Shipped','Completed','Cancelled'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+ csrf_check(); $id=(int)($_POST['id']??0); $status=(string)($_POST['status']??''); $payment=(string)($_POST['payment_status']??'');
+ if(!in_array($status,$allowedStatuses,true)||!in_array($payment,['Pending','Awaiting Payment','Paid','Refunded'],true)) flash('error','Status pesanan tidak valid.');
+ else {db()->prepare('UPDATE orders SET status=?,payment_status=? WHERE id=?')->execute([$status,$payment,$id]);flash('success','Pesanan diperbarui.');}
+ redirect('orders.php');
+}
+$orders=db()->query('SELECT * FROM orders ORDER BY created_at DESC LIMIT 200')->fetchAll();
+admin_header('Orders');
+?><section class="admin-panel"><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Order / Customer</th><th>Items</th><th>Total</th><th>Update status</th></tr></thead><tbody><?php foreach($orders as $order): ?><tr><td><strong><?=e($order['order_code'])?></strong><br><?=e($order['customer_name'])?><br><small><?=e($order['email'])?> · <?=e($order['phone'])?></small><br><small><?=e($order['address'])?></small><br><small><?=e($order['created_at'])?></small></td><td><?php $itemsStmt=db()->prepare('SELECT product_name,quantity,size_name FROM order_items WHERE order_id=?');$itemsStmt->execute([$order['id']]);foreach($itemsStmt->fetchAll() as $item): ?><?=e($item['product_name'])?> × <?=(int)$item['quantity']?> <?=e($item['size_name'])?><br><?php endforeach; ?></td><td><?=e(money($order['total']))?></td><td><form method="post" class="admin-inline-form"><input type="hidden" name="csrf_token" value="<?=e(csrf_token())?>"><input type="hidden" name="id" value="<?=(int)$order['id']?>"><label>Status<select name="status"><?php foreach($allowedStatuses as $status): ?><option <?=$order['status']===$status?'selected':''?>><?=e($status)?></option><?php endforeach; ?></select></label><label>Payment<select name="payment_status"><?php foreach(['Pending','Awaiting Payment','Paid','Refunded'] as $status): ?><option <?=$order['payment_status']===$status?'selected':''?>><?=e($status)?></option><?php endforeach; ?></select></label><button class="button" type="submit">SAVE</button></form></td></tr><?php endforeach; ?><?php if(!$orders): ?><tr><td colspan="4">No orders yet.</td></tr><?php endif; ?></tbody></table></div></section><?php admin_footer(); ?>
